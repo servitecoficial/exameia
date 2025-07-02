@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrector de Exámenes con IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active:hover {
+            background: #0056b3;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .training-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            background: #f8f9ff;
+        }
+
+        .training-section h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .message.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .message.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config-group {
+            margin-bottom: 15px;
+        }
+
+        .config-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .config-group input, .config-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .config-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .exam-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .score-excellent { background: #d4edda; color: #155724; }
+        .score-good { background: #d1ecf1; color: #0c5460; }
+        .score-average { background: #fff3cd; color: #856404; }
+        .score-poor { background: #f8d7da; color: #721c24; }
+
+        .training-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .training-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Corrector de Exámenes con IA</h1>
+            <p>Sube exámenes, entrena la IA y obtén correcciones automáticas</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('training')">📚 Entrenamiento</button>
+            <button class="tab" onclick="showTab('correction')">✍️ Corrección</button>
+            <button class="tab" onclick="showTab('config')">⚙️ Configuración</button>
+        </div>
+
+        <!-- PESTAÑA DE ENTRENAMIENTO -->
+        <div id="training" class="tab-content active">
+            <div class="training-section">
+                <h3>📝 Cargar Respuestas Correctas</h3>
+                <p>Sube el examen con las respuestas correctas para entrenar la IA</p>
+                
+                <div class="file-upload">
+                    <div class="upload-area" onclick="document.getElementById('trainingFile').click()" ondrop="handleDrop(event, 'training')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <p>📁 Arrastra aquí el archivo del examen con respuestas correctas o haz clic para seleccionar</p>
+                        <p><small>Soporta: JPG, PNG, PDF</small></p>
+                    </div>
+                    <input type="file" id="trainingFile" accept=".jpg,.jpeg,.png,.pdf" onchange="handleTrainingFile(event)">
+                </div>
+
+                <div class="config-group">
+                    <label>Descripción del Examen:</label>
+                    <textarea id="examDescription" placeholder="Ej: Examen de matemáticas, 10 preguntas de múltiple choice, temas: álgebra, geometría..."></textarea>
+                </div>
+
+                <div class="config-group">
+                    <label>Respuestas Correctas (formato texto):</label>
+                    <textarea id="correctAnswers" placeholder="1. A - La respuesta es...&#10;2. B - Porque...&#10;3. V - Verdadero porque...&#10;4. F - Falso porque..."></textarea>
+                </div>
+
+                <button class="btn" onclick="saveTrainingData()">💾 Guardar Datos de Entrenamiento</button>
+            </div>
+
+            <div class="training-data">
+                <h3>📊 Datos de Entrenamiento Guardados</h3>
+                <div id="trainingList">
+                    <p>No hay datos de entrenamiento guardados aún.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA DE CORRECCIÓN -->
+        <div id="correction" class="tab-content">
+            <div class="chat-container">
+                <div class="messages" id="messages">
+                    <div class="message ai">
+                        <strong>🤖 IA Correctora:</strong> ¡Hola! Sube una imagen o PDF del examen que quieres que corrija. 
+                        Asegúrate de haber entrenado la IA primero con las respuestas correctas.
+                    </div>
+                </div>
+
+                <div class="file-upload">
+                    <div class="upload-area" onclick="document.getElementById('examFile').click()" ondrop="handleDrop(event, 'exam')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <p>📄 Arrastra el examen a corregir o haz clic para seleccionar</p>
+                    </div>
+                    <input type="file" id="examFile" accept=".jpg,.jpeg,.png,.pdf" onchange="handleExamFile(event)">
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="Escribe instrucciones adicionales para la corrección..." onkeypress="handleKeyPress(event)">
+                    <button class="btn" onclick="sendMessage()">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA DE CONFIGURACIÓN -->
+        <div id="config" class="tab-content">
+            <div class="config-section">
+                <h3>🔧 Configuración de la IA</h3>
+                
+                <div class="config-group">
+                    <label>API Key de Hugging Face:</label>
+                    <input type="password" id="apiKey" placeholder="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">
+                    <small>Obtén tu API key gratis en: <a href="https://huggingface.co/settings/tokens" target="_blank">https://huggingface.co/settings/tokens</a></small>
+                </div>
+
+                <div class="config-group">
+                    <label>Modelo de Visión:</label>
+                    <select id="visionModel">
+                        <option value="microsoft/DialoGPT-medium">DialoGPT Medium (Gratis)</option>
+                        <option value="facebook/blenderbot-400M-distill">BlenderBot (Gratis)</option>
+                        <option value="microsoft/DialoGPT-large">DialoGPT Large (Gratis)</option>
+                    </select>
+                </div>
+
+                <div class="config-group">
+                    <label>Criterios de Calificación:</label>
+                    <textarea id="gradingCriteria" placeholder="- Respuesta completamente correcta: 10 puntos&#10;- Respuesta parcialmente correcta: 5-8 puntos&#10;- Respuesta incorrecta: 1-4 puntos&#10;..."></textarea>
+                </div>
+
+                <button class="btn" onclick="saveConfig()">💾 Guardar Configuración</button>
+                <button class="btn" onclick="testConnection()" style="margin-left: 10px;">🔗 Probar Conexión</button>
+            </div>
+
+            <div id="configStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let trainingData = [];
+        let config = {
+            apiKey: '',
+            visionModel: 'microsoft/DialoGPT-medium',
+            gradingCriteria: `- Respuesta completamente correcta: 10 puntos
+- Respuesta parcialmente correcta: 5-8 puntos  
+- Respuesta incorrecta: 1-4 puntos
+- Sin respuesta: 1 punto`
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            loadTrainingData();
+        });
+
+        // Manejo de pestañas
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar pestaña seleccionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Manejo de archivos - Drag & Drop
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event, type) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                if (type === 'training') {
+                    handleTrainingFile({ target: { files: files } });
+                } else if (type === 'exam') {
+                    handleExamFile({ target: { files: files } });
+                }
+            }
+        }
+
+        // Manejo de archivo de entrenamiento
+        function handleTrainingFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            addMessage('user', `📁 Archivo de entrenamiento subido: ${file.name}`);
+            
+            // Procesar archivo
+            if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    addMessage('success', '✅ Archivo de entrenamiento cargado correctamente. Completa la descripción y respuestas correctas.');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Manejo de archivo de examen
+        function handleExamFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            addMessage('user', `📄 Examen subido: ${file.name}`);
+            
+            if (trainingData.length === 0) {
+                addMessage('error', '⚠️ No hay datos de entrenamiento. Ve a la pestaña de Entrenamiento primero.');
+                return;
+            }
+
+            if (!config.apiKey) {
+                addMessage('error', '⚠️ Configura tu API Key en la pestaña de Configuración.');
+                return;
+            }
+
+            // Procesar examen
+            processExam(file);
+        }
+
+        // Procesar examen con IA
+        async function processExam(file) {
+            addMessage('ai', '🔍 Analizando el examen... <span class="loading"></span>');
+
+            try {
+                // Simular procesamiento con IA
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Aquí iría la llamada real a Hugging Face API
+                const mockResults = await mockExamCorrection(file);
+                
+                displayResults(mockResults);
+                
+            } catch (error) {
+                addMessage('error', `❌ Error al procesar el examen: ${error.message}`);
+            }
+        }
+
+        // Simulación de corrección (reemplazar con API real)
+        async function mockExamCorrection(file) {
+            // Simular análisis del examen
+            const mockAnswers = [
+                { question: 1, studentAnswer: 'A', correctAnswer: 'A', points: 10, feedback: 'Correcto' },
+                { question: 2, studentAnswer: 'B', correctAnswer: 'C', points: 2, feedback: 'Incorrecto, la respuesta era C' },
+                { question: 3, studentAnswer: 'V', correctAnswer: 'V', points: 10, feedback: 'Verdadero, correcto' },
+                { question: 4, studentAnswer: 'F', correctAnswer: 'V', points: 3, feedback: 'Falso, pero era verdadero' },
+                { question: 5, studentAnswer: 'C', correctAnswer: 'C', points: 10, feedback: 'Perfecto' }
+            ];
+
+            const totalPoints = mockAnswers.reduce((sum, answer) => sum + answer.points, 0);
+            const maxPoints = mockAnswers.length * 10;
+            const finalScore = Math.round((totalPoints / maxPoints) * 10);
+
+            return {
+                answers: mockAnswers,
+                totalPoints,
+                maxPoints,
+                finalScore,
+                feedback: generateOverallFeedback(finalScore)
+            };
+        }
+
+        // Mostrar resultados
+        function displayResults(results) {
+            let scoreClass = 'score-poor';
+            if (results.finalScore >= 8) scoreClass = 'score-excellent';
+            else if (results.finalScore >= 6) scoreClass = 'score-good';
+            else if (results.finalScore >= 4) scoreClass = 'score-average';
+
+            let resultHTML = `
+                <div class="score-display ${scoreClass}">
+                    📊 CALIFICACIÓN FINAL: ${results.finalScore}/10
+                    <br><small>${results.totalPoints}/${results.maxPoints} puntos</small>
+                </div>
+                
+                <h4>📝 Corrección Detallada:</h4>
+                <div class="exam-preview">
+            `;
+
+            results.answers.forEach(answer => {
+                const isCorrect = answer.points >= 8;
+                resultHTML += `
+                    <div class="training-item" style="border-left-color: ${isCorrect ? '#28a745' : '#dc3545'}">
+                        <strong>Pregunta ${answer.question}:</strong> 
+                        Respuesta del estudiante: <code>${answer.studentAnswer}</code> | 
+                        Respuesta correcta: <code>${answer.correctAnswer}</code>
+                        <br><strong>Puntos:</strong> ${answer.points}/10
+                        <br><strong>Comentario:</strong> ${answer.feedback}
+                    </div>
+                `;
+            });
+
+            resultHTML += `
+                </div>
+                <div class="message success">
+                    <strong>📋 Feedback General:</strong><br>
+                    ${results.feedback}
+                </div>
+            `;
+
+            addMessage('ai', resultHTML);
+        }
+
+        // Generar feedback general
+        function generateOverallFeedback(score) {
+            if (score >= 9) return '🌟 ¡Excelente trabajo! Dominas muy bien los conceptos.';
+            if (score >= 7) return '👍 Buen trabajo, pero hay algunos puntos que mejorar.';
+            if (score >= 5) return '📚 Necesitas repasar algunos conceptos importantes.';
+            return '📖 Te recomiendo estudiar más a fondo estos temas antes del próximo examen.';
+        }
+
+        // Guardar datos de entrenamiento
+        function saveTrainingData() {
+            const description = document.getElementById('examDescription').value;
+            const answers = document.getElementById('correctAnswers').value;
+
+            if (!description || !answers) {
+                addMessage('error', '⚠️ Completa la descripción y las respuestas correctas.');
+                return;
+            }
+
+            const trainingItem = {
+                id: Date.now(),
+                description,
+                answers,
+                date: new Date().toLocaleDateString()
+            };
+
+            trainingData.push(trainingItem);
+            updateTrainingList();
+            
+            // Limpiar formulario
+            document.getElementById('examDescription').value = '';
+            document.getElementById('correctAnswers').value = '';
+            
+            addMessage('success', '✅ Datos de entrenamiento guardados correctamente.');
+        }
+
+        // Actualizar lista de entrenamiento
+        function updateTrainingList() {
+            const container = document.getElementById('trainingList');
+            
+            if (trainingData.length === 0) {
+                container.innerHTML = '<p>No hay datos de entrenamiento guardados aún.</p>';
+                return;
+            }
+
+            let html = '';
+            trainingData.forEach(item => {
+                html += `
+                    <div class="training-item">
+                        <strong>📝 ${item.description}</strong> <small>(${item.date})</small>
+                        <br><strong>Respuestas:</strong>
+                        <pre style="white-space: pre-wrap; margin-top: 10px;">${item.answers}</pre>
+                        <button class="btn" style="margin-top: 10px;" onclick="removeTrainingData(${item.id})">🗑️ Eliminar</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Eliminar datos de entrenamiento
+        function removeTrainingData(id) {
+            trainingData = trainingData.filter(item => item.id !== id);
+            updateTrainingList();
+            addMessage('success', '🗑️ Datos de entrenamiento eliminados.');
+        }
+
+        // Configuración
+        function saveConfig() {
+            config.apiKey = document.getElementById('apiKey').value;
+            config.visionModel = document.getElementById('visionModel').value;
+            config.gradingCriteria = document.getElementById('gradingCriteria').value;
+
+            // Guardar en localStorage (simulado)
+            showStatus('success', '✅ Configuración guardada correctamente.');
+        }
+
+        function loadConfig() {
+            // Cargar configuración predeterminada
+            document.getElementById('visionModel').value = config.visionModel;
+            document.getElementById('gradingCriteria').value = config.gradingCriteria;
+        }
+
+        function loadTrainingData() {
+            // Simular carga de datos de entrenamiento guardados
+            updateTrainingList();
+        }
+
+        // Probar conexión con IA
+        async function testConnection() {
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (!apiKey) {
+                showStatus('error', '❌ Introduce una API Key válida.');
+                return;
+            }
+
+            showStatus('warning', '🔗 Probando conexión... <span class="loading"></span>');
+
+            try {
+                // Simular prueba de conexión
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                showStatus('success', '✅ Conexión exitosa con Hugging Face.');
+            } catch (error) {
+                showStatus('error', `❌ Error de conexión: ${error.message}`);
+            }
+        }
+
+        // Mostrar estado
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('configStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Chat functions
+        function addMessage(type, content) {
+            const messages = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            
+            if (type === 'user') {
+                message.innerHTML = `<strong>👤 Tú:</strong> ${content}`;
+            } else if (type === 'ai') {
+                message.innerHTML = `<strong>🤖 IA:</strong> ${content}`;
+            } else {
+                message.innerHTML = content;
+            }
+            
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            // Respuesta automática de la IA
+            setTimeout(() => {
+                addMessage('ai', '📝 He recibido tu mensaje. Si has subido un examen, estoy procesándolo. Si necesitas ayuda específica, puedes ser más detallado en tus instrucciones.');
+            }, 1000);
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
